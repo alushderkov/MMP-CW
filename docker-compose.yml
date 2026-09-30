@@ -1,0 +1,21 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - lingua_mongo:/data/db
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/lingua
+      JWT_SECRET: lingua-course-work-2026
+      JWT_EXPIRES: 7d
+      TRANSLATE_ENDPOINT: https://api.mymemory.translated.net/get
+    depends_on:
+      - mongo
+
+volumes:
+  lingua_mongo:
