@@ -97,7 +97,10 @@ th { font-size: 12px; color: var(--muted); font-weight: 600; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
 .stat { padding: 16px; border-radius: 16px; }
 .stat b { font-size: 28px; display: block; }
-.bar { height: 10px; background: #efe7da; border-radius: 99px; overflow: hidden; }
+.hist-row { display: flex; align-items: center; gap: 10px; }
+.hist-row > span:first-child { flex: 0 0 92px; }
+.hist-row > span:last-child { text-align: right; }
+.bar { flex: 1; display: block; height: 10px; background: #efe7da; border-radius: 99px; overflow: hidden; }
 .bar > span { display: block; height: 100%; background: var(--navy); }
 .lesson-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .toast-stack { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 20; }

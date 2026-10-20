@@ -91,12 +91,12 @@ export default function ProgressPage() {
         <article className="card">
           <h3>Усвоение</h3>
           {(stats?.byMastery || []).map((row) => (
-            <p key={row.level}>
-              уровень {row.level}
+            <p key={row.level} className="hist-row">
+              <span>уровень {row.level}</span>
               <span className="bar">
                 <span style={{ width: `${(row.count / maxMastery) * 100}%` }} />
               </span>
-              {row.count}
+              <span>{row.count}</span>
             </p>
           ))}
         </article>
