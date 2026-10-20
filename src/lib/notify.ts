@@ -13,6 +13,7 @@ export async function notify(
     title: notice.title,
     message: notice.message,
     kind: notice.kind,
+    read: false,
     createdAt: notice.createdAt,
   };
   pushEvent(userId, payload);

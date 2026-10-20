@@ -104,9 +104,18 @@ th { font-size: 12px; color: var(--muted); font-weight: 600; }
 .bar > span { display: block; height: 100%; background: var(--navy); }
 .lesson-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .toast-stack { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 20; }
-.toast { padding: 12px 14px; border-radius: 14px; min-width: 260px; }
+.toast { position: relative; padding: 12px 36px 12px 14px; border-radius: 14px; min-width: 260px; }
 .toast.success { border-color: #b7d4c4; }
 .toast.warning { border-color: #e3b7b1; }
+.toast-close {
+  position: absolute; top: 8px; right: 10px; border: 0; background: transparent;
+  color: var(--muted); font-size: 18px; line-height: 1; padding: 0; cursor: pointer;
+}
+.notice-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.notice-head h3 { margin: 0; }
+.notice-head .btn:disabled { opacity: 0.45; cursor: default; }
+.notice { margin: 10px 0; }
+.notice.read { color: var(--muted); }
 .notice-list { max-height: 280px; overflow: auto; }
 .footer { color: var(--muted); text-align: center; padding: 24px 0 40px; font-size: 13px; }
 .mastery { letter-spacing: 2px; color: var(--clay); }

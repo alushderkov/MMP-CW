@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-type Notice = { id: string; title: string; message: string; kind: string; createdAt: string };
+type Notice = { id: string; title: string; message: string; kind: string; createdAt: string; read?: boolean };
 
 export default function CabinetLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,8 +37,9 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
       if (!payload.title) {
         return;
       }
-      setToasts((prev) => [payload, ...prev].slice(0, 3));
-      setNotices((prev) => [payload, ...prev].slice(0, 40));
+      const notice = { ...payload, read: false };
+      setToasts((prev) => [notice, ...prev].slice(0, 3));
+      setNotices((prev) => [notice, ...prev].slice(0, 40));
     };
     return () => source.close();
   }, []);
@@ -56,6 +57,19 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/");
+  }
+
+  function dismissToast(id: string) {
+    setToasts((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  async function markAllRead() {
+    const res = await fetch("/api/notifications", { method: "PATCH" });
+    if (!res.ok) {
+      return;
+    }
+    setNotices((prev) => prev.map((item) => ({ ...item, read: true })));
+    setToasts([]);
   }
 
   return (
@@ -81,11 +95,16 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
       </nav>
       {children}
       <aside className="card" style={{ marginTop: 18 }}>
-        <h3>Уведомления</h3>
+        <div className="notice-head">
+          <h3>Уведомления</h3>
+          <button className="btn ghost" type="button" onClick={markAllRead} disabled={!notices.some((item) => !item.read)}>
+            Прочитать все
+          </button>
+        </div>
         <div className="notice-list">
           {notices.length === 0 ? <p>Пока нет событий.</p> : null}
           {notices.map((item) => (
-            <p key={item.id}>
+            <p key={item.id} className={item.read ? "notice read" : "notice"}>
               <b>{item.title}.</b> {item.message}
             </p>
           ))}
@@ -94,6 +113,9 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
       <div className="toast-stack">
         {toasts.map((item) => (
           <div className={`toast ${item.kind}`} key={item.id}>
+            <button className="toast-close" type="button" onClick={() => dismissToast(item.id)} aria-label="Скрыть">
+              ×
+            </button>
             <b>{item.title}</b>
             <div>{item.message}</div>
           </div>
