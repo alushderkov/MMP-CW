@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import SpeakButton from "@/components/SpeakButton";
 import { useCabinet } from "@/components/CabinetContext";
+import { plural } from "@/lib/catalog";
 
 type Stats = {
   wordsTotal: number;
@@ -72,11 +73,11 @@ export default function CabinetHome() {
       <div className="stats">
         <div className="stat">
           <b>{stats?.wordsTotal ?? "—"}</b>
-          слов в словаре
+          {plural(stats?.wordsTotal ?? 0, "слово", "слова", "слов")} в словаре
         </div>
         <div className="stat">
           <b>{stats?.lessonsTotal ?? "—"}</b>
-          уроков
+          {plural(stats?.lessonsTotal ?? 0, "урок", "урока", "уроков")}
         </div>
         <div className="stat">
           <b>{stats?.learned ?? "—"}</b>
@@ -84,7 +85,7 @@ export default function CabinetHome() {
         </div>
         <div className="stat">
           <b>{stats ? Object.keys(stats.byLanguage).length : "—"}</b>
-          изучаемых языков
+          {plural(stats ? Object.keys(stats.byLanguage).length : 0, "изучаемый язык", "изучаемых языка", "изучаемых языков")}
         </div>
       </div>
       <section className="grid two">

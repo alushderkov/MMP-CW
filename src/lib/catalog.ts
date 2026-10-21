@@ -48,6 +48,18 @@ export function speechLang(code: string) {
   return ALL_LANGUAGES.find((item) => item.code === code)?.speech || code;
 }
 
+export function plural(count: number, one: string, few: string, many: string) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) {
+    return one;
+  }
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return few;
+  }
+  return many;
+}
+
 export function partOfSpeechLabel(code: string) {
   return PARTS_OF_SPEECH.find((item) => item.code === code)?.label || code;
 }

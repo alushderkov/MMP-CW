@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import SpeakButton from "@/components/SpeakButton";
-import { languageLabel } from "@/lib/catalog";
+import { languageLabel, plural } from "@/lib/catalog";
 
 type Stats = {
   wordsTotal: number;
@@ -136,7 +136,7 @@ export default function ProgressPage() {
       <div className="stats">
         <div className="stat">
           <b>{stats?.wordsTotal ?? 0}</b>
-          всего слов
+          {plural(stats?.wordsTotal ?? 0, "слово", "слова", "слов")} всего
         </div>
         <div className="stat">
           <b>{stats?.learned ?? 0}</b>
@@ -144,7 +144,7 @@ export default function ProgressPage() {
         </div>
         <div className="stat">
           <b>{stats?.lessonsTotal ?? 0}</b>
-          уроков
+          {plural(stats?.lessonsTotal ?? 0, "урок", "урока", "уроков")}
         </div>
         <div className="stat">
           <b className="small-stat">
