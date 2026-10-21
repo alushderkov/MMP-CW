@@ -69,6 +69,7 @@ img { max-width: 100%; }
   background: #1f3d4d; color: #f7f2ea; border-radius: 24px; padding: 22px;
 }
 .panel h3 { margin-top: 0; }
+.hero .panel p { color: rgba(247, 242, 234, 0.86); font-size: 16px; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0 40px; }
 .card { padding: 20px; border-radius: 20px; }
 .card h3 { margin-top: 0; }
