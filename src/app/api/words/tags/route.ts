@@ -4,7 +4,6 @@ import Word from "@/lib/models/Word";
 
 export const dynamic = "force-dynamic";
 
-
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {

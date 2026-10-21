@@ -9,7 +9,6 @@ import { notify } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
-
 export async function POST(request: NextRequest) {
   await connectDb();
   const body = await request.json().catch(() => ({}));

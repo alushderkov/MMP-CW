@@ -8,7 +8,6 @@ import { notify } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
-
 function idFilter(userId: unknown, id: string) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return null;

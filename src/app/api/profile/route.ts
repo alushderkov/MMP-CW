@@ -6,7 +6,6 @@ import { notify } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
-
 export async function PATCH(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {

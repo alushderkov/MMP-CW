@@ -7,7 +7,6 @@ import { publicUser, setSessionCookie, signToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-
 export async function POST(request: NextRequest) {
   await connectDb();
   const body = await request.json().catch(() => ({}));

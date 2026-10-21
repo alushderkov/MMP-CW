@@ -5,7 +5,6 @@ import Lesson from "@/lib/models/Lesson";
 
 export const dynamic = "force-dynamic";
 
-
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {

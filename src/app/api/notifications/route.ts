@@ -4,7 +4,6 @@ import Notice from "@/lib/models/Notice";
 
 export const dynamic = "force-dynamic";
 
-
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {

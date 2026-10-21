@@ -7,7 +7,6 @@ import { notify } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
-
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   if (!user) {

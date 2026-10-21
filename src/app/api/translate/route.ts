@@ -5,7 +5,6 @@ import { requireString } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
-
 const CODES = new Set(ALL_LANGUAGES.map((item) => item.code));
 
 function tidy(translation: string, source: string) {
