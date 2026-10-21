@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDb } from "@/lib/db";
 import User from "@/lib/models/User";
+import { isNativeLanguage, isStudyLanguage } from "@/lib/catalog";
 import { isEmail, requireString } from "@/lib/validate";
 import { publicUser, setSessionCookie, signToken } from "@/lib/auth";
 import { notify } from "@/lib/notify";
@@ -21,6 +22,14 @@ export async function POST(request: NextRequest) {
   if (body.email && !isEmail(String(body.email))) {
     errors.push("Почта: некорректный формат");
   }
+  const nativeLanguage = String(body.nativeLanguage || "ru");
+  const targetLanguage = String(body.targetLanguage || "en");
+  if (!isNativeLanguage(nativeLanguage)) {
+    errors.push("Родной язык: выберите значение из списка");
+  }
+  if (!isStudyLanguage(targetLanguage)) {
+    errors.push("Изучаемый язык: выберите значение из списка");
+  }
   if (errors.length) {
     return NextResponse.json({ error: errors.join("; ") }, { status: 400 });
   }
@@ -35,8 +44,8 @@ export async function POST(request: NextRequest) {
     name: String(body.name).trim(),
     email,
     passwordHash: await bcrypt.hash(String(body.password), 10),
-    nativeLanguage: body.nativeLanguage || "ru",
-    targetLanguage: body.targetLanguage || "en",
+    nativeLanguage,
+    targetLanguage,
   });
 
   await notify(String(user._id), "Регистрация завершена", "Личный кабинет готов к работе со словарём и уроками.", "success");

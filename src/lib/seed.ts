@@ -56,11 +56,13 @@ export async function seedIfEmpty() {
     targetLanguage: "en",
   });
 
-  await Word.insertMany(
+  const words = await Word.insertMany(
     SAMPLE_WORDS.map((item) => ({ ...item, userId: user._id }))
   );
+  const idsOf = (...terms: string[]) => words.filter((word) => terms.includes(word.term)).map((word) => word._id);
+  const lessonWords = [idsOf("to learn", "vocabulary"), idsOf("apple"), idsOf("to learn", "progress", "because")];
   await Lesson.insertMany(
-    SAMPLE_LESSONS.map((item) => ({ ...item, userId: user._id }))
+    SAMPLE_LESSONS.map((item, index) => ({ ...item, words: lessonWords[index], userId: user._id }))
   );
   await Notice.create({
     userId: user._id,

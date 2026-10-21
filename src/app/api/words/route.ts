@@ -1,45 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getCurrentUser, unauthorized } from "@/lib/auth";
 import Word from "@/lib/models/Word";
-import { clampMastery, parseListQuery, requireString } from "@/lib/validate";
+import Lesson from "@/lib/models/Lesson";
+import { escapeRegex, parseListQuery } from "@/lib/validate";
+import { readWordFields, serializeWord } from "@/lib/words";
 import { notify } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
-
-function serialize(doc: Record<string, unknown>) {
-  return {
-    id: String(doc._id),
-    term: doc.term,
-    translation: doc.translation,
-    transcription: doc.transcription,
-    language: doc.language,
-    partOfSpeech: doc.partOfSpeech,
-    example: doc.example,
-    tags: doc.tags,
-    mastery: doc.mastery,
-    notes: doc.notes,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  };
-}
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
     return unauthorized();
   }
-  const { q, sort, order } = parseListQuery(new URL(request.url), "words");
+  const url = new URL(request.url);
+  const { q, limit, sortSpec } = parseListQuery(url, "words");
   const filter: Record<string, unknown> = { userId: user._id };
   if (q) {
+    const pattern = escapeRegex(q);
     filter.$or = [
-      { term: { $regex: q, $options: "i" } },
-      { translation: { $regex: q, $options: "i" } },
-      { tags: { $regex: q, $options: "i" } },
+      { term: { $regex: pattern, $options: "i" } },
+      { translation: { $regex: pattern, $options: "i" } },
+      { tags: { $regex: pattern, $options: "i" } },
     ];
   }
-  const items = await Word.find(filter).sort({ [sort]: order }).lean();
-  return NextResponse.json({ items: items.map(serialize) });
+  const tag = (url.searchParams.get("tag") || "").trim().toLowerCase();
+  if (tag) {
+    filter.tags = tag;
+  }
+  const language = (url.searchParams.get("language") || "").trim();
+  if (language) {
+    filter.language = language;
+  }
+  const lessonId = url.searchParams.get("lesson") || "";
+  if (lessonId) {
+    if (!mongoose.Types.ObjectId.isValid(lessonId)) {
+      return NextResponse.json({ error: "Урок не найден" }, { status: 404 });
+    }
+    const lesson = await Lesson.findOne({ _id: lessonId, userId: user._id }).lean<{ words?: unknown[] }>();
+    if (!lesson) {
+      return NextResponse.json({ error: "Урок не найден" }, { status: 404 });
+    }
+    filter._id = { $in: lesson.words || [] };
+  }
+  let query = Word.find(filter).sort(sortSpec);
+  if (limit) {
+    query = query.limit(limit);
+  }
+  const items = await query.lean();
+  return NextResponse.json({ items: items.map(serializeWord) });
 }
 
 export async function POST(request: NextRequest) {
@@ -48,34 +59,17 @@ export async function POST(request: NextRequest) {
     return unauthorized();
   }
   const body = await request.json().catch(() => ({}));
-  const errors = [
-    requireString(body.term, "Слово", 1, 120),
-    requireString(body.translation, "Перевод", 1, 240),
-  ].filter(Boolean) as string[];
+  const { errors, data } = readWordFields(body, false);
   if (errors.length) {
     return NextResponse.json({ error: errors.join("; ") }, { status: 400 });
   }
 
-  const tags = Array.isArray(body.tags)
-    ? body.tags.map((t: unknown) => String(t).trim()).filter(Boolean)
-    : String(body.tags || "")
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-
   const created = await Word.create({
+    language: user.targetLanguage || "en",
+    ...data,
     userId: user._id,
-    term: String(body.term).trim(),
-    translation: String(body.translation).trim(),
-    transcription: String(body.transcription || "").trim(),
-    language: String(body.language || user.targetLanguage || "en").trim(),
-    partOfSpeech: String(body.partOfSpeech || "").trim(),
-    example: String(body.example || "").trim(),
-    notes: String(body.notes || "").trim(),
-    tags,
-    mastery: clampMastery(body.mastery),
   });
 
   await notify(String(user._id), "Слово добавлено", `«${created.term}» сохранено в словаре.`, "success");
-  return NextResponse.json({ item: serialize(created.toObject()) }, { status: 201 });
+  return NextResponse.json({ item: serializeWord(created.toObject()) }, { status: 201 });
 }

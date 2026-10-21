@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { NATIVE_LANGUAGES, STUDY_LANGUAGES } from "@/lib/catalog";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function RegisterPage() {
         name: form.get("name"),
         email: form.get("email"),
         password: form.get("password"),
+        nativeLanguage: form.get("nativeLanguage"),
         targetLanguage: form.get("targetLanguage"),
       }),
     });
@@ -43,13 +45,28 @@ export default function RegisterPage() {
         <input id="email" name="email" type="email" required />
         <label htmlFor="password">Пароль (не менее 8 символов)</label>
         <input id="password" name="password" type="password" required minLength={8} />
-        <label htmlFor="targetLanguage">Изучаемый язык</label>
-        <select id="targetLanguage" name="targetLanguage" defaultValue="en">
-          <option value="en">английский</option>
-          <option value="de">немецкий</option>
-          <option value="fr">французский</option>
-          <option value="es">испанский</option>
-        </select>
+        <div className="form-row">
+          <div>
+            <label htmlFor="nativeLanguage">Родной язык</label>
+            <select id="nativeLanguage" name="nativeLanguage" defaultValue="ru">
+              {NATIVE_LANGUAGES.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="targetLanguage">Изучаемый язык</label>
+            <select id="targetLanguage" name="targetLanguage" defaultValue="en">
+              {STUDY_LANGUAGES.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         {error ? <p className="error">{error}</p> : null}
         <p>
           <button className="btn" disabled={pending} type="submit">

@@ -2,16 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CabinetContext, CabinetUser } from "@/components/CabinetContext";
 
 type Notice = { id: string; title: string; message: string; kind: string; createdAt: string; read?: boolean };
+
+const TOAST_TTL = 8000;
 
 export default function CabinetLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [user, setUser] = useState<CabinetUser | null>(null);
   const [toasts, setToasts] = useState<Notice[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
+  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -21,7 +25,7 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
         }
         return res.json();
       })
-      .then((data) => setName(data.user.name))
+      .then((data) => setUser(data.user))
       .catch(() => router.replace("/login"));
   }, [router]);
 
@@ -40,8 +44,14 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
       const notice = { ...payload, read: false };
       setToasts((prev) => [notice, ...prev].slice(0, 3));
       setNotices((prev) => [notice, ...prev].slice(0, 40));
+      timers.current.set(notice.id, setTimeout(() => dismissToast(notice.id), TOAST_TTL));
     };
-    return () => source.close();
+    const pending = timers.current;
+    return () => {
+      source.close();
+      pending.forEach((timer) => clearTimeout(timer));
+      pending.clear();
+    };
   }, []);
 
   const links = useMemo(
@@ -50,9 +60,13 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
       ["/cabinet/words", "Слова"],
       ["/cabinet/lessons", "Уроки"],
       ["/cabinet/progress", "Прогресс"],
+      ["/cabinet/translator", "Переводчик"],
+      ["/cabinet/profile", "Профиль"],
     ],
     []
   );
+
+  const unread = notices.filter((item) => !item.read).length;
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -60,6 +74,11 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
   }
 
   function dismissToast(id: string) {
+    const timer = timers.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timers.current.delete(id);
+    }
     setToasts((prev) => prev.filter((item) => item.id !== id));
   }
 
@@ -69,58 +88,65 @@ export default function CabinetLayout({ children }: { children: React.ReactNode 
       return;
     }
     setNotices((prev) => prev.map((item) => ({ ...item, read: true })));
+    timers.current.forEach((timer) => clearTimeout(timer));
+    timers.current.clear();
     setToasts([]);
   }
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        <Link className="brand" href="/cabinet">
-          <div className="mark">L</div>
-          <div>
-            <b>Lingua</b>
-            <span>{name || "личный кабинет"}</span>
-          </div>
-        </Link>
-        <button className="btn secondary" onClick={logout} type="button">
-          Выйти
-        </button>
-      </header>
-      <nav className="cabinet-nav">
-        {links.map(([href, label]) => (
-          <Link className={pathname === href ? "active" : ""} href={href} key={href}>
-            {label}
+    <CabinetContext.Provider value={{ user, setUser }}>
+      <div className="shell">
+        <header className="topbar">
+          <Link className="brand" href="/cabinet">
+            <div className="mark">L</div>
+            <div>
+              <b>Lingua</b>
+              <span>{user?.name || "личный кабинет"}</span>
+            </div>
           </Link>
-        ))}
-      </nav>
-      {children}
-      <aside className="card" style={{ marginTop: 18 }}>
-        <div className="notice-head">
-          <h3>Уведомления</h3>
-          <button className="btn ghost" type="button" onClick={markAllRead} disabled={!notices.some((item) => !item.read)}>
-            Прочитать все
+          <button className="btn secondary" onClick={logout} type="button">
+            Выйти
           </button>
-        </div>
-        <div className="notice-list">
-          {notices.length === 0 ? <p>Пока нет событий.</p> : null}
-          {notices.map((item) => (
-            <p key={item.id} className={item.read ? "notice read" : "notice"}>
-              <b>{item.title}.</b> {item.message}
-            </p>
+        </header>
+        <nav className="cabinet-nav">
+          {links.map(([href, label]) => (
+            <Link className={pathname === href ? "active" : ""} href={href} key={href}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        {children}
+        <aside className="card" style={{ marginTop: 18 }}>
+          <div className="notice-head">
+            <h3>
+              Уведомления {unread ? <span className="badge">{unread}</span> : null}
+            </h3>
+            <button className="btn ghost" type="button" onClick={markAllRead} disabled={!unread}>
+              Прочитать все
+            </button>
+          </div>
+          <div className="notice-list">
+            {notices.length === 0 ? <p>Пока нет событий.</p> : null}
+            {notices.map((item) => (
+              <p key={item.id} className={item.read ? "notice read" : "notice"}>
+                <b>{item.title}.</b> {item.message}
+                <time>{new Date(item.createdAt).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" })}</time>
+              </p>
+            ))}
+          </div>
+        </aside>
+        <div className="toast-stack">
+          {toasts.map((item) => (
+            <div className={`toast ${item.kind}`} key={item.id}>
+              <button className="toast-close" type="button" onClick={() => dismissToast(item.id)} aria-label="Скрыть">
+                ×
+              </button>
+              <b>{item.title}</b>
+              <div>{item.message}</div>
+            </div>
           ))}
         </div>
-      </aside>
-      <div className="toast-stack">
-        {toasts.map((item) => (
-          <div className={`toast ${item.kind}`} key={item.id}>
-            <button className="toast-close" type="button" onClick={() => dismissToast(item.id)} aria-label="Скрыть">
-              ×
-            </button>
-            <b>{item.title}</b>
-            <div>{item.message}</div>
-          </div>
-        ))}
       </div>
-    </div>
+    </CabinetContext.Provider>
   );
 }
